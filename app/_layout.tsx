@@ -9,10 +9,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import '@/global.css';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import 'react-native-url-polyfill/auto';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -26,6 +23,8 @@ export default function RootLayout() {
     <GluestackUIProvider mode="dark">
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="login" options={{ title: 'Login', headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         </Stack>
