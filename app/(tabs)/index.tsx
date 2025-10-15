@@ -1,6 +1,6 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { apiRequest, getChatMessages } from '@/lib/api';
+import { apiRequest, getChatMessages, streamChat } from '@/lib/api';
 import { ChatTask, Message } from '@/lib/types';
 import { useLocalSearchParams } from 'expo-router';
 import { Send } from 'lucide-react-native';
