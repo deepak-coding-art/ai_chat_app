@@ -82,7 +82,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     }
 
     const loadMoreChats = () => {
-        console.log('loadMoreChats called', { isLoadingMore, hasMoreChats, isLoadingChats, currentPage });
         if (!isLoadingMore && hasMoreChats && !isLoadingChats) {
             const nextPage = currentPage + 1;
             console.log('Loading page:', nextPage);
