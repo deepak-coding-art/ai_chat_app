@@ -6,6 +6,12 @@ export interface Chat {
   title: string | null;
 }
 
+export interface ChatTask {
+  title: string;
+  icon: string;
+  prompt: string;
+}
+
 export interface Message {
   id: string;
   role: "user" | "assistant";

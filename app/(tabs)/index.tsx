@@ -1,15 +1,17 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { getChatMessages, streamChat } from '@/lib/api';
-import { Message } from '@/lib/types';
+import { apiRequest, getChatMessages, streamChat } from '@/lib/api';
+import { ChatTask, Message } from '@/lib/types';
 import { useLocalSearchParams } from 'expo-router';
 import { Send } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Text,
   TextInput,
   TouchableOpacity,
   View
@@ -29,13 +31,16 @@ interface Tool {
   icon: string;
 }
 
+
+
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ chat_id?: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState<string>('');
   const [chatId, setChatId] = useState<string | null>(params.chat_id || null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [activeTool, setActiveTool] = useState<Tool | null>(null);
+  const [chatTasks, setChatTasks] = useState<ChatTask[]>([]);
 
   // Load messages when chat_id changes
   useEffect(() => {
@@ -60,6 +65,21 @@ export default function ChatScreen() {
 
     loadMessages();
   }, [params.chat_id]);
+
+  useEffect(() => {
+    if (!chatId) {
+      loadChatTasks();
+    }
+  }, [chatId]);
+
+  const loadChatTasks = async () => {
+    try {
+      const data = await apiRequest<{ tasks: ChatTask[] }>("/chat/tasks");
+      setChatTasks(data.tasks);
+    } catch (error) {
+      console.error("Failed to load chat tasks:", error);
+    }
+  }
 
   const handleSendMessage = async () => {
     const trimmedInputText = inputText.trim();
@@ -143,21 +163,25 @@ export default function ChatScreen() {
     >
       <ThemedView className="flex-1">
         {/* Messages */}
-
-        <ScrollView className="flex-1 px-2" showsVerticalScrollIndicator={false}>
-          {isLoadingMessages ? (
-            <View className="flex-1 items-center justify-center py-8">
-              <ActivityIndicator size="large" color="#999" />
-            </View>
-          ) : (
-            <>
-              <View className="h-10" />
-              {messages.map((message) => (
-                <MessageBox key={message.id} message={message} activeTool={activeTool} />
-              ))}
-            </>
+        {!chatId ? (
+          <NewChatGreeting chatTasks={chatTasks} setInputText={setInputText} />
+        ) :
+          (
+            <ScrollView className="flex-1 px-2" showsVerticalScrollIndicator={false}>
+              {isLoadingMessages ? (
+                <View className="flex-1 items-center justify-center py-8">
+                  <ActivityIndicator size="large" color="#999" />
+                </View>
+              ) : (
+                <>
+                  <View className="h-10" />
+                  {messages.map((message) => (
+                    <MessageBox key={message.id} message={message} activeTool={activeTool} />
+                  ))}
+                </>
+              )}
+            </ScrollView>
           )}
-        </ScrollView>
 
         {/* Input */}
         <ChatInput inputText={inputText} setInputText={setInputText} handleSendMessage={handleSendMessage} />
@@ -207,6 +231,7 @@ const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Too
   )
 }
 
+
 // Extract plain text from various possible event payload shapes
 function extractText(input: unknown): string {
   if (typeof input === 'string') return input;
@@ -228,6 +253,28 @@ function extractText(input: unknown): string {
     return '';
   }
   return '';
+}
+
+
+function NewChatGreeting({ chatTasks, setInputText }: { chatTasks: ChatTask[], setInputText: (text: string) => void }) {
+  const handleSelectChatTask = (task: ChatTask) => {
+    setInputText(task.prompt);
+  }
+  return (
+    <View className="flex-1 items-center justify-center py-8 px-8">
+      <Text className="text-3xl font-bold mb-2 text-white text-center mb-4">How can I help you today?</Text>
+      {chatTasks.length > 0 && (
+        <View className="flex-row items-center justify-center flex-wrap gap-4">
+          {chatTasks.map((task) => (
+            <TouchableOpacity key={task.title} className="flex-row items-center justify-center rounded-full px-4 py-2 border border-outline-50" onPress={() => handleSelectChatTask(task)}>
+              <Image source={{ uri: task.icon }} width={24} height={24} className="resize-contain mr-2" />
+              <Text className="text-gray-400 text-lg">{task.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  )
 }
 
 const BouncingDots = () => {
