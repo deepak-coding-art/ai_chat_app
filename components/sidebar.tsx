@@ -2,7 +2,7 @@ import { apiRequest } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { Chat } from '@/lib/types';
 import { router } from 'expo-router';
-import { LogOut, MessageSquare, Plus, X } from 'lucide-react-native';
+import { LogOut, MessageSquare, Plus, Trash2, X } from 'lucide-react-native';
 import React from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +18,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const [chats, setChats] = React.useState<Chat[]>([]);
     const [isLoadingChats, setIsLoadingChats] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+    const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null);
+    const [isDeletingChat, setIsDeletingChat] = React.useState<string | null>(null);
 
     const getUserChats = async () => {
         setIsLoadingChats(true);
@@ -35,9 +37,29 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         }
     }
 
+    const deleteChat = async (chatId: string) => {
+        setIsDeletingChat(chatId);
+        try {
+            await apiRequest(`/chat/messages?chat_id=${chatId}`, {
+                method: 'DELETE',
+            });
+            // Remove the chat from the list
+            setChats(prev => prev.filter(chat => chat.id !== chatId));
+            setActiveDropdown(null);
+        } catch (error) {
+            setError(error instanceof Error ? error.message : 'Failed to delete chat');
+            console.error(error);
+        } finally {
+            setIsDeletingChat(null);
+        }
+    }
+
     React.useEffect(() => {
         if (isOpen) {
             getUserChats();
+        } else {
+            // Close dropdown when sidebar closes
+            setActiveDropdown(null);
         }
     }, [isOpen]);
 
@@ -54,7 +76,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     return (
         <>
             {/* Overlay */}
-            <Pressable className="absolute inset-0 bg-black/50 z-[998]" onPress={onClose} />
+            <Pressable
+                className="absolute inset-0 bg-black/50 z-[998]"
+                onPress={() => {
+                    if (activeDropdown) {
+                        setActiveDropdown(null);
+                    } else {
+                        onClose();
+                    }
+                }}
+            />
 
             {/* Sidebar */}
             <Animated.View
@@ -97,23 +128,55 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <ScrollView className="flex-1" contentContainerStyle={{ paddingVertical: 8 }}>
                         {error && <Text className="text-[#FF0000] text-sm font-semibold px-4">{error}</Text>}
                         {chats?.map((chat) => (
-                            <TouchableOpacity
-                                key={`chat-${chat.id}`}
-                                className="flex-row items-center px-4 py-3 gap-3"
-                                activeOpacity={0.7}
-                                onPress={() => {
-                                    router.push({
-                                        pathname: '/(tabs)',
-                                        params: { chat_id: chat.id }
-                                    });
-                                    onClose();
-                                }}
-                            >
-                                <View className="w-7 h-7 rounded-full bg-[#333333] items-center justify-center">
-                                    <MessageSquare color="#FFFFFF" size={18} />
-                                </View>
-                                <Text className="text-[#E5E5E5] text-sm font-semibold">{chat.title || chat.id.slice(0, 8)}</Text>
-                            </TouchableOpacity>
+                            <View key={`chat-${chat.id}`} className="relative">
+                                <TouchableOpacity
+                                    className="flex-row items-center px-4 py-3 gap-3"
+                                    activeOpacity={0.7}
+                                    onPress={() => {
+                                        if (activeDropdown === chat.id) {
+                                            setActiveDropdown(null);
+                                        } else {
+                                            router.push({
+                                                pathname: '/(tabs)',
+                                                params: { chat_id: chat.id }
+                                            });
+                                            onClose();
+                                        }
+                                    }}
+                                    onLongPress={() => {
+                                        setActiveDropdown(activeDropdown === chat.id ? null : chat.id);
+                                    }}
+                                    delayLongPress={500}
+                                >
+                                    <View className="w-7 h-7 rounded-full bg-[#333333] items-center justify-center">
+                                        <MessageSquare color="#FFFFFF" size={18} />
+                                    </View>
+                                    <Text className="text-[#E5E5E5] text-sm font-semibold flex-1" numberOfLines={1}>
+                                        {chat.title || chat.id.slice(0, 8)}
+                                    </Text>
+                                </TouchableOpacity>
+
+                                {/* Dropdown Actions */}
+                                {activeDropdown === chat.id && (
+                                    <View className="absolute right-2 top-12 bg-[#2A2A2A] border border-[#404040] rounded-lg shadow-lg z-50 min-w-[120px]">
+                                        <TouchableOpacity
+                                            className="flex-row items-center gap-2 px-3 py-2.5 rounded-lg"
+                                            activeOpacity={0.7}
+                                            onPress={() => deleteChat(chat.id)}
+                                            disabled={isDeletingChat === chat.id}
+                                        >
+                                            {isDeletingChat === chat.id ? (
+                                                <ActivityIndicator size="small" color="#FF4444" />
+                                            ) : (
+                                                <Trash2 color="#FF4444" size={16} />
+                                            )}
+                                            <Text className="text-[#FF4444] text-sm font-semibold">
+                                                Delete
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
                         ))}
                     </ScrollView>
                 )}
