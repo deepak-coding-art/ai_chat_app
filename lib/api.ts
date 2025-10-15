@@ -44,6 +44,7 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
   }
   const normalizedEndpoint = normalizeEndpoint(endpoint);
   console.debug("Calling endpoint:", normalizedEndpoint, "method:", method);
+  // console.log("Final headers:", finalHeaders);
   const response = await fetch(normalizedEndpoint, {
     method,
     headers: finalHeaders,
@@ -70,6 +71,13 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
   }
 
   return maybeJson as TResponse;
+}
+
+export async function getChatMessages(chatId: string) {
+  return apiRequest<{
+    thread_id: string;
+    messages: import("@/lib/types").Message[];
+  }>(`chat/messages?chat_id=${chatId}`, { method: "GET" });
 }
 
 type StreamChatBody = { message: string; chat_id: string | null };

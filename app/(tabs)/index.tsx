@@ -1,10 +1,12 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { streamChat } from '@/lib/api';
+import { getChatMessages, streamChat } from '@/lib/api';
 import { Message } from '@/lib/types';
+import { useLocalSearchParams } from 'expo-router';
 import { Send } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,12 +14,53 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
+
+interface Tool {
+  name: string;
+  icon: string;
+}
 
 export default function ChatScreen() {
+  const params = useLocalSearchParams<{ chat_id?: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-  const [chatId, setChatId] = useState<string | null>(null);
+  const [chatId, setChatId] = useState<string | null>(params.chat_id || null);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [activeTool, setActiveTool] = useState<Tool | null>(null);
+
+  // Load messages when chat_id changes
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (params.chat_id) {
+        setIsLoadingMessages(true);
+        try {
+          const data = await getChatMessages(params.chat_id);
+          console.log("Messages:", data.messages);
+          setMessages(data.messages);
+          setChatId(params.chat_id);
+        } catch (error) {
+          console.error("Failed to load messages:", error);
+        } finally {
+          setIsLoadingMessages(false);
+        }
+      } else {
+        // New chat - clear messages
+        setMessages([]);
+        setChatId(null);
+      }
+    };
+
+    loadMessages();
+  }, [params.chat_id]);
 
   const handleSendMessage = async () => {
     if (inputText.trim() === '') return;
@@ -52,6 +95,7 @@ export default function ChatScreen() {
             if (event.type === "token") {
               const token = extractText(event.content);
               setMessages(prev => {
+                setActiveTool(null);
                 // Append token to the latest assistant draft
                 return prev.map(m =>
                   m.id === draftAssistantId ? { ...m, content: m.content + token } : m
@@ -59,6 +103,7 @@ export default function ChatScreen() {
               });
             } else if (event.type === "final") {
               // Ensure final message is set (in case no tokens streamed)
+              setActiveTool(null);
               const finalText = extractText(event.message);
               setMessages(prev => prev.map(m =>
                 m.id === draftAssistantId && finalText
@@ -67,9 +112,17 @@ export default function ChatScreen() {
               ));
               // Update chat id
               if (event.chat_id) setChatId(event.chat_id);
+            } else if (event.type === "tool_start") {
+              const tool_name = event.tool;
+              const tool_icon = event.tool_icon;
+              const tool: Tool = {
+                name: tool_name,
+                icon: tool_icon,
+              };
+              setActiveTool(tool);
+            } else if (event.type === "tool_end") {
+              setActiveTool((old) => old?.name === event.tool ? null : old);
             }
-            // Tool events can be shown as inline status if desired; ignoring for now
-
           },
         }
       );
@@ -90,10 +143,17 @@ export default function ChatScreen() {
     >
       <ThemedView className="flex-1">
         {/* Messages */}
+
         <ScrollView className="flex-1 pt-4" showsVerticalScrollIndicator={false}>
-          {messages.map((message) => (
-            <MessageBox key={message.id} message={message} />
-          ))}
+          {isLoadingMessages ? (
+            <View className="flex-1 items-center justify-center py-8">
+              <ActivityIndicator size="large" color="#999" />
+            </View>
+          ) : (
+            messages.map((message) => (
+              <MessageBox key={message.id} message={message} activeTool={activeTool} />
+            ))
+          )}
         </ScrollView>
 
         {/* Input */}
@@ -104,8 +164,9 @@ export default function ChatScreen() {
 }
 
 
-const MessageBox = ({ message }: { message: Message }) => {
+const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Tool | null }) => {
   const isUser = message.role === "user";
+  const isLoading = !isUser && !message.content;
 
   return (
     <View
@@ -119,12 +180,23 @@ const MessageBox = ({ message }: { message: Message }) => {
           : 'bg-secondary-100 rounded-bl-sm'
           }`}
       >
-        <ThemedText
-          className={`text-sm ${isUser ? 'text-white' : 'text-typography-900'
-            }`}
-        >
-          {message.content}
-        </ThemedText>
+        {isLoading ? (
+          <View className="flex-row items-center gap-2 min-h-[24px]">
+            <BouncingDots />
+            {activeTool && (
+              <ThemedText className="text-xs text-typography-600 ml-2">
+                {activeTool.icon}
+              </ThemedText>
+            )}
+          </View>
+        ) : (
+          <ThemedText
+            className={`text-sm ${isUser ? 'text-white' : 'text-typography-900'
+              }`}
+          >
+            {message.content}
+          </ThemedText>
+        )}
 
       </View>
 
@@ -154,6 +226,79 @@ function extractText(input: unknown): string {
   }
   return '';
 }
+
+const BouncingDots = () => {
+  const dot1 = useSharedValue(0);
+  const dot2 = useSharedValue(0);
+  const dot3 = useSharedValue(0);
+
+  useEffect(() => {
+    // Bounce animation: up and down
+    const bounceAnimation = withRepeat(
+      withSequence(
+        withTiming(-8, { duration: 400 }),
+        withTiming(0, { duration: 400 })
+      ),
+      -1, // infinite
+      false
+    );
+
+    // Start each dot with a delay
+    dot1.value = bounceAnimation;
+    dot2.value = withDelay(150, bounceAnimation);
+    dot3.value = withDelay(300, bounceAnimation);
+  }, [dot1, dot2, dot3]);
+
+  const animatedStyle1 = useAnimatedStyle(() => ({
+    transform: [{ translateY: dot1.value }],
+  }));
+
+  const animatedStyle2 = useAnimatedStyle(() => ({
+    transform: [{ translateY: dot2.value }],
+  }));
+
+  const animatedStyle3 = useAnimatedStyle(() => ({
+    transform: [{ translateY: dot3.value }],
+  }));
+
+  return (
+    <View className="flex-row items-center gap-1">
+      <Animated.View
+        style={[
+          {
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: '#666',
+          },
+          animatedStyle1,
+        ]}
+      />
+      <Animated.View
+        style={[
+          {
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: '#666',
+          },
+          animatedStyle2,
+        ]}
+      />
+      <Animated.View
+        style={[
+          {
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: '#666',
+          },
+          animatedStyle3,
+        ]}
+      />
+    </View>
+  );
+};
 
 const ChatInput = ({ inputText, setInputText, handleSendMessage }: { inputText: string, setInputText: (text: string) => void, handleSendMessage: () => void }) => {
   return (

@@ -15,8 +15,8 @@ export interface Message {
 export type ChatId = string;
 
 export type ChatEvent =
-  | { type: "tool_start"; tool: string; chat_id: ChatId }
-  | { type: "tool_end"; tool: string; chat_id: ChatId }
+  | { type: "tool_start"; tool: string; chat_id: ChatId; tool_icon: string }
+  | { type: "tool_end"; tool: string; chat_id: ChatId; tool_icon: string }
   | { type: "token"; content: string; chat_id: ChatId }
   | { type: "final"; message: string; chat_id: ChatId }
   | { type: "error"; message: string };

@@ -76,7 +76,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </View>
 
                 {/* New chat */}
-                <TouchableOpacity className="flex-row items-center px-4 py-3 gap-3" activeOpacity={0.7}>
+                <TouchableOpacity
+                    className="flex-row items-center px-4 py-3 gap-3"
+                    activeOpacity={0.7}
+                    onPress={() => {
+                        router.push('/(tabs)');
+                        onClose();
+                    }}
+                >
                     <Plus color="#FFFFFF" size={24} />
                     <Text className="text-[#E5E5E5] text-sm font-semibold">New chat</Text>
                 </TouchableOpacity>
@@ -90,7 +97,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <ScrollView className="flex-1" contentContainerStyle={{ paddingVertical: 8 }}>
                         {error && <Text className="text-[#FF0000] text-sm font-semibold px-4">{error}</Text>}
                         {chats?.map((chat) => (
-                            <TouchableOpacity key={`chat-${chat.id}`} className="flex-row items-center px-4 py-3 gap-3" activeOpacity={0.7}>
+                            <TouchableOpacity
+                                key={`chat-${chat.id}`}
+                                className="flex-row items-center px-4 py-3 gap-3"
+                                activeOpacity={0.7}
+                                onPress={() => {
+                                    router.push({
+                                        pathname: '/(tabs)',
+                                        params: { chat_id: chat.id }
+                                    });
+                                    onClose();
+                                }}
+                            >
                                 <View className="w-7 h-7 rounded-full bg-[#333333] items-center justify-center">
                                     <MessageSquare color="#FFFFFF" size={18} />
                                 </View>
