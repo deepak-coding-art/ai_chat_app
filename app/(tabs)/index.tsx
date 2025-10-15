@@ -178,9 +178,9 @@ const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Too
     >
 
       <View
-        className={`max-w-[80%] p-3 rounded-lg ${isUser
-          ? 'bg-secondary-200 rounded-br-sm'
-          : 'bg-secondary-50 rounded-bl-sm'
+        className={`max-w-[80%] p-3 rounded-[24px] ${isUser
+          ? 'bg-secondary-200' // rounded-br-sm
+          : 'bg-secondary-50' //rounded-bl-sm'
           }`}
       >
         {isLoading ? (

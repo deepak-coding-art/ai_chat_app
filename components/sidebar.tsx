@@ -137,7 +137,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 }}
             >
                 {/* Header */}
-                <View className="flex-row items-center justify-between px-4 py-5 bg-[#2A2A2A]">
+                <View className="flex-row items-center justify-between px-4 py-2">
                     <View className="flex-row items-center gap-2">
                         <Text className="text-white text-lg font-bold">AI Chat</Text>
                     </View>
@@ -148,7 +148,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 {/* New chat */}
                 <TouchableOpacity
-                    className="flex-row items-center px-4 py-3 gap-3"
+                    className="flex-row items-center px-4 py-3 gap-3 border-b border-outline-100"
                     activeOpacity={0.7}
                     onPress={() => {
                         router.push('/(tabs)');
@@ -156,7 +156,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     }}
                 >
                     <Plus color="#FFFFFF" size={24} />
-                    <Text className="text-[#E5E5E5] text-sm font-semibold">New chat</Text>
+                    <Text className="text-[#E5E5E5] text-lg font-semibold">New chat</Text>
                 </TouchableOpacity>
 
                 {/* Chat list */}
@@ -259,7 +259,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 {/* Logout */}
                 <TouchableOpacity
-                    className="flex-row items-center gap-2 px-4 py-3 border-t border-[#262626]"
+                    className="flex-row items-center gap-2 px-4 py-3 border-t border-outline-100"
                     activeOpacity={0.7}
                     onPress={async () => {
                         await supabase.auth.signOut();
@@ -267,7 +267,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     }}
                 >
                     <LogOut color="#FFFFFF" size={18} />
-                    <Text className="text-white text-sm font-semibold">Logout</Text>
+                    <Text className="text-white text-lg font-semibold">Logout</Text>
                 </TouchableOpacity>
             </Animated.View>
         </>
