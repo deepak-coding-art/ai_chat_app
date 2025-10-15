@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
-import { ActivityIndicator, Image, Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 WebBrowser.maybeCompleteAuthSession(); // required for web only
 const redirectTo = makeRedirectUri();
@@ -94,71 +94,85 @@ export default function Auth() {
     };
 
     return (
-        <ThemedView className="flex-1 items-center justify-center px-8">
-            <View className="items-center justify-center mb-20">
-                <Text className="text-5xl font-bold mb-2 text-white">AI Chat</Text>
-                <Text className="text-gray-400 text-center">
-                    Auto single step signup and login
-                </Text>
-            </View>
-
-            <TextInput
-                className="w-full bg-secondary-200 rounded-full px-4 py-3 text-lg text-white"
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                editable={!loading}
-            />
-            {error && <Text className="text-red-500 text-sm self-start mx-4 mt-1">{error}</Text>}
-            <TouchableOpacity
-                onPress={sendMagicLink}
-                disabled={loading}
-                activeOpacity={0.8}
-                className="w-full overflow-hidden rounded-full mt-6"
+        <ThemedView className="flex-1">
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
-                <LinearGradient
-                    colors={['#ec4899', '#a855f7']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    className="py-3 px-6 flex-row justify-center items-center rounded-full"
+                <ScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
                 >
-                    {loading ? (
-                        <>
-                            <ActivityIndicator color="white" />
-                            <Text className="text-white text-lg ml-2">Sending...</Text>
-                        </>
-                    ) : (
-                        <Text className="text-white text-lg font-semibold">Login with Email</Text>
-                    )}
-                </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity
-                onPress={performGoogleOAuth}
-                disabled={googleLoading}
-                className="w-full bg-white rounded-full mt-12 py-3 px-6 flex-row justify-center items-center"
-            >
+                    <View className="flex-1 items-center justify-center px-8 py-8">
+                        <View className="items-center justify-center mb-20">
+                            <Text className="text-5xl font-bold mb-2 text-white">AI Chat</Text>
+                            <Text className="text-gray-400 text-center">
+                                Auto single step signup and login
+                            </Text>
+                        </View>
 
-                {googleLoading ? (
-                    <>
-                        <ActivityIndicator color="black" className="mr-3" />
-                        <Text className="text-gray-800 text-lg font-semibold">Loading...</Text>
-                    </>
-                ) : (
-                    <>
-                        <Image
-                            source={require('@/assets/images/google-icon.png')}
-                            className="w-6 h-6 mr-3"
+                        <TextInput
+                            className="w-full bg-secondary-200 rounded-full px-4 py-3 text-lg text-white"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            autoComplete="email"
+                            editable={!loading}
                         />
+                        {error && <Text className="text-red-500 text-sm self-start mx-4 mt-1">{error}</Text>}
+                        <TouchableOpacity
+                            onPress={sendMagicLink}
+                            disabled={loading}
+                            activeOpacity={0.8}
+                            className="w-full overflow-hidden rounded-full mt-6"
+                        >
+                            <LinearGradient
+                                colors={['#ec4899', '#a855f7']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                className="py-3 px-6 flex-row justify-center items-center rounded-full"
+                            >
+                                {loading ? (
+                                    <>
+                                        <ActivityIndicator color="white" />
+                                        <Text className="text-white text-lg ml-2">Sending...</Text>
+                                    </>
+                                ) : (
+                                    <Text className="text-white text-lg font-semibold">Login with Email</Text>
+                                )}
+                            </LinearGradient>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={performGoogleOAuth}
+                            disabled={googleLoading}
+                            className="w-full bg-white rounded-full mt-12 py-3 px-6 flex-row justify-center items-center"
+                        >
 
-                        <Text className="text-gray-800 text-lg font-semibold">Login with Google</Text>
-                    </>
-                )}
+                            {googleLoading ? (
+                                <>
+                                    <ActivityIndicator color="black" className="mr-3" />
+                                    <Text className="text-gray-800 text-lg font-semibold">Loading...</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Image
+                                        source={require('@/assets/images/google-icon.png')}
+                                        className="w-6 h-6 mr-3"
+                                    />
+
+                                    <Text className="text-gray-800 text-lg font-semibold">Login with Google</Text>
+                                </>
+                            )}
 
 
-            </TouchableOpacity>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
 
             {/* Success Modal */}
             <Modal

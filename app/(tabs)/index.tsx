@@ -1,19 +1,21 @@
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { apiRequest, getChatMessages, streamChat } from '@/lib/api';
+import { apiRequest, getChatMessages } from '@/lib/api';
 import { ChatTask, Message } from '@/lib/types';
 import { useLocalSearchParams } from 'expo-router';
 import { Send } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import Animated, {
@@ -35,6 +37,7 @@ interface Tool {
 
 export default function ChatScreen() {
   const params = useLocalSearchParams<{ chat_id?: string }>();
+  const scrollViewRef = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState<string>('');
   const [chatId, setChatId] = useState<string | null>(params.chat_id || null);
@@ -52,6 +55,10 @@ export default function ChatScreen() {
           const data = await getChatMessages(params.chat_id);
           setMessages(data.messages);
           setChatId(params.chat_id);
+          // Scroll to bottom after loading messages
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: false });
+          }, 100);
         } catch (error) {
           console.error("Failed to load messages:", error);
         } finally {
@@ -105,6 +112,13 @@ export default function ChatScreen() {
       { id: draftAssistantId, role: "assistant", content: "" },
     ]);
 
+    // Scroll to bottom after adding draft assistant message
+    setTimeout(() => {
+      console.log("Element ref:", scrollViewRef.current);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+      console.log("Scrolled to bottom");
+    }, 100);
+
     try {
       await streamChat(
         { message: newMessage.content, chat_id: chatId },
@@ -135,6 +149,10 @@ export default function ChatScreen() {
               ));
               // Update chat id
               if (event.chat_id) setChatId(event.chat_id);
+              // Scroll to bottom after final response
+              setTimeout(() => {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }, 100);
             } else if (event.type === "tool_start") {
               const tool_name = event.tool;
               const tool_icon = event.tool_icon;
@@ -160,17 +178,28 @@ export default function ChatScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1"
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ThemedView className="flex-1">
+
+    <ThemedView className="flex-1">
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 30 : 30}
+      >
         {/* Messages */}
         {isNewChat ? (
-          <NewChatGreeting chatTasks={chatTasks} setInputText={setInputText} />
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View className="flex-1">
+              <NewChatGreeting chatTasks={chatTasks} setInputText={setInputText} />
+            </View>
+          </TouchableWithoutFeedback>
         ) :
           (
-            <ScrollView className="flex-1 px-2" showsVerticalScrollIndicator={false}>
+            <ScrollView
+              ref={scrollViewRef}
+              className="flex-1 px-2"
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
               {isLoadingMessages ? (
                 <View className="flex-1 items-center justify-center py-8">
                   <ActivityIndicator size="large" color="#999" />
@@ -188,8 +217,8 @@ export default function ChatScreen() {
 
         {/* Input */}
         <ChatInput inputText={inputText} setInputText={setInputText} handleSendMessage={handleSendMessage} />
-      </ThemedView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </ThemedView>
   );
 }
 
@@ -225,7 +254,7 @@ const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Too
           </View>
         ) : (
           <ThemedText
-            className={`text-sm ${isUser ? 'text-white' : 'text-typography-900'
+            className={`text-sm p-2 ${isUser ? 'text-white' : 'text-typography-900'
               }`}
           >
             {message.content}

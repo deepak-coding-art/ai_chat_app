@@ -4,7 +4,7 @@ import { Chat } from '@/lib/types';
 import { router } from 'expo-router';
 import { LogOut, Plus, Trash2, X } from 'lucide-react-native';
 import React from 'react';
-import { ActivityIndicator, Animated, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, Keyboard, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface SidebarProps {
@@ -117,6 +117,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <Pressable
                 className="absolute inset-0 bg-black/50 z-[998]"
                 onPress={() => {
+                    Keyboard.dismiss();
                     if (activeDropdown) {
                         setActiveDropdown(null);
                     } else {
@@ -139,7 +140,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <View className="flex-row items-center gap-2">
                         <Text className="text-white text-lg font-bold">AI Chat</Text>
                     </View>
-                    <TouchableOpacity onPress={onClose} activeOpacity={0.7}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            Keyboard.dismiss();
+                            onClose();
+                        }}
+                        activeOpacity={0.7}
+                    >
                         <X color="#FFFFFF" size={24} />
                     </TouchableOpacity>
                 </View>
@@ -149,6 +156,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     className="flex-row items-center px-4 py-3 gap-3 border-b border-outline-100"
                     activeOpacity={0.7}
                     onPress={() => {
+                        Keyboard.dismiss();
                         router.push('/(tabs)');
                         onClose();
                     }}
@@ -193,6 +201,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                                     className="flex-row items-center px-4 py-3 gap-3"
                                     activeOpacity={0.7}
                                     onPress={() => {
+                                        Keyboard.dismiss();
                                         if (activeDropdown === chat.id) {
                                             setActiveDropdown(null);
                                         } else {
@@ -204,6 +213,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                                         }
                                     }}
                                     onLongPress={() => {
+                                        Keyboard.dismiss();
                                         setActiveDropdown(activeDropdown === chat.id ? null : chat.id);
                                     }}
                                     delayLongPress={500}
@@ -260,6 +270,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     className="flex-row items-center gap-2 px-4 py-3 border-t border-outline-100"
                     activeOpacity={0.7}
                     onPress={async () => {
+                        Keyboard.dismiss();
                         await supabase.auth.signOut();
                         router.replace('/login');
                     }}
