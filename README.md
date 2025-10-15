@@ -4,6 +4,10 @@
 
 A simple mobile AI chat application. You can start a new chat or continue existing ones, send a prompt, and watch the assistant stream its reply live. It shows a bouncing dots animation while responses are loading and a clear message if an error occurs.
 
+### Website
+
+- [Check the website](https://aichat.builddev.in)
+
 ### Built with
 
 - Expo Router + React Native 0.81 + React 19
@@ -127,3 +131,5 @@ If using EAS or gradle directly, ensure the API URL env is available at build ti
 ## License
 
 MIT
+
+Built with ❤️ by [builddev.in](https://builddev.in).
