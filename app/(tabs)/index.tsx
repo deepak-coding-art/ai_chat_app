@@ -40,6 +40,7 @@ export default function ChatScreen() {
   const [chatId, setChatId] = useState<string | null>(params.chat_id || null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [activeTool, setActiveTool] = useState<Tool | null>(null);
+  const [isNewChat, setIsNewChat] = useState(false);
   const [chatTasks, setChatTasks] = useState<ChatTask[]>([]);
 
   // Load messages when chat_id changes
@@ -68,6 +69,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!chatId) {
+      setIsNewChat(true);
       loadChatTasks();
     }
   }, [chatId]);
@@ -84,6 +86,7 @@ export default function ChatScreen() {
   const handleSendMessage = async () => {
     const trimmedInputText = inputText.trim();
     if (trimmedInputText === '') return;
+    setIsNewChat(false);
     const newMessageID = Date.now().toString();
 
     const newMessage: Message = {
@@ -163,7 +166,7 @@ export default function ChatScreen() {
     >
       <ThemedView className="flex-1">
         {/* Messages */}
-        {!chatId ? (
+        {isNewChat ? (
           <NewChatGreeting chatTasks={chatTasks} setInputText={setInputText} />
         ) :
           (
@@ -194,7 +197,7 @@ export default function ChatScreen() {
 const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Tool | null }) => {
   const isUser = message.role === "user";
   const isLoading = !isUser && !message.content;
-
+  const isNetworkIcon = activeTool?.icon.startsWith("http");
   return (
     <View
       className={`flex-row items-end mb-4 mx-2 ${isUser ? 'justify-end' : 'justify-start'
@@ -211,9 +214,13 @@ const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Too
           <View className="flex-row items-center gap-2 min-h-[24px]">
             <BouncingDots />
             {activeTool && (
-              <ThemedText className="text-xs text-typography-600 ml-2">
-                {activeTool.icon}
-              </ThemedText>
+              isNetworkIcon ? (
+                <Image source={{ uri: activeTool.icon }} width={24} height={24} className="resize-contain mr-2" />
+              ) : (
+                <ThemedText className="text-xs text-typography-600 ml-2">
+                  {activeTool.icon}
+                </ThemedText>
+              )
             )}
           </View>
         ) : (
