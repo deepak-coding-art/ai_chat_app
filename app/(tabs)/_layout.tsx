@@ -1,6 +1,6 @@
 import { Sidebar } from '@/components/sidebar';
 import { Slot } from 'expo-router';
-import { Menu } from 'lucide-react-native';
+import { TextAlignJustifyIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,21 +9,22 @@ export default function SideLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <SafeAreaView className='flex-1 bg-[#0F0F0F]' edges={['top', 'bottom', 'left', 'right']}>
-      {/* Header with menu button */}
-      <View className='flex-row items-center justify-between px-4 py-3 bg-[#0F0F0F]'>
+    <SafeAreaView className='flex-1 bg-secondary-50' edges={['top', 'bottom', 'left', 'right']}>
+      {/* Main content - full screen */}
+      <View className='flex-1 bg-secondary-50'>
+        <Slot />
+      </View>
+
+      {/* Header with menu button - positioned absolutely on top */}
+      <View className='absolute top-4 left-0 right-0 flex-row items-center justify-between px-4 py-3 bg-transparent z-50' style={{ pointerEvents: 'box-none' }}>
         <TouchableOpacity
           onPress={() => setIsSidebarOpen(true)}
           activeOpacity={0.7}
-          className='flex-row items-center justify-center'
+          className='flex-row items-center justify-center rounded-full bg-secondary-100 p-3 border border-outline-200'
+          style={{ pointerEvents: 'auto' }}
         >
-          <Menu color="#FFFFFF" size={24} />
+          <TextAlignJustifyIcon color="#FFFFFF" size={24} />
         </TouchableOpacity>
-      </View>
-
-      {/* Main content */}
-      <View className='flex-1 bg-[#0F0F0F]'>
-        <Slot />
       </View>
 
       {/* Sidebar (overlay) */}

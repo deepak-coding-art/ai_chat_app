@@ -63,12 +63,13 @@ export default function ChatScreen() {
   }, [params.chat_id]);
 
   const handleSendMessage = async () => {
-    if (inputText.trim() === '') return;
+    const trimmedInputText = inputText.trim();
+    if (trimmedInputText === '') return;
     const newMessageID = Date.now().toString();
 
     const newMessage: Message = {
       role: "user",
-      content: inputText,
+      content: trimmedInputText,
       id: newMessageID,
     };
 
@@ -144,15 +145,18 @@ export default function ChatScreen() {
       <ThemedView className="flex-1">
         {/* Messages */}
 
-        <ScrollView className="flex-1 pt-4" showsVerticalScrollIndicator={false}>
+        <ScrollView className="flex-1 px-2" showsVerticalScrollIndicator={false}>
           {isLoadingMessages ? (
             <View className="flex-1 items-center justify-center py-8">
               <ActivityIndicator size="large" color="#999" />
             </View>
           ) : (
-            messages.map((message) => (
-              <MessageBox key={message.id} message={message} activeTool={activeTool} />
-            ))
+            <>
+              <View className="h-10" />
+              {messages.map((message) => (
+                <MessageBox key={message.id} message={message} activeTool={activeTool} />
+              ))}
+            </>
           )}
         </ScrollView>
 
@@ -302,13 +306,14 @@ const BouncingDots = () => {
 
 const ChatInput = ({ inputText, setInputText, handleSendMessage }: { inputText: string, setInputText: (text: string) => void, handleSendMessage: () => void }) => {
   return (
-    <View className="bg-background-50 p-4 border-t border-outline-200">
+    <View className="p-4 border-t border-outline-50">
       <View className="flex-row items-end">
         <TextInput
-          className="flex-1 border border-outline-300 rounded-full px-4 py-3 mr-3 bg-secondary-100 text-sm max-h-24 text-white"
+          className="flex-1 rounded-[24px] px-4 py-3 mr-3 bg-secondary-100 text-lg max-h-24 text-white"
           placeholder="Type your message..."
           value={inputText}
           onChangeText={setInputText}
+          maxLength={1000}
           onSubmitEditing={handleSendMessage}
           returnKeyType="send"
           multiline
@@ -321,7 +326,7 @@ const ChatInput = ({ inputText, setInputText, handleSendMessage }: { inputText: 
           onPress={handleSendMessage}
           disabled={inputText.trim() === ''}
         >
-          <Send size={20} color="#fff" />
+          <Send size={24} color="#fff" />
         </TouchableOpacity>
       </View>
     </View>
