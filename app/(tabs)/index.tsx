@@ -400,6 +400,7 @@ const ChatInput = ({ inputText, setInputText, handleSendMessage }: { inputText: 
         <TextInput
           className="flex-1 rounded-[24px] px-4 py-3 mr-3 bg-secondary-100 text-lg max-h-24 text-white"
           placeholder="Type your message..."
+          autoFocus
           value={inputText}
           onChangeText={setInputText}
           maxLength={1000}
