@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { router } from "expo-router";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -67,6 +68,10 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
     const message =
       (maybeJson && (maybeJson.message || maybeJson.error)) ||
       response.statusText;
+    if (response.status === 401) {
+      await supabase.auth.signOut();
+      router.replace("/login");
+    }
     throw new Error(typeof message === "string" ? message : "Request failed");
   }
 

@@ -30,7 +30,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         } else {
             setIsLoadingChats(true);
         }
-
+        setError(null);
         try {
             const data = await apiRequest(`/chat?page=${page}&limit=25`, {
                 method: 'GET',
@@ -45,8 +45,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     totalPages: number;
                 }
             };
-            console.log(pagination);
-
             if (append) {
                 setChats(prev => [...prev, ...newChats]);
             } else {
@@ -66,6 +64,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
     const deleteChat = async (chatId: string) => {
         setIsDeletingChat(chatId);
+        setError(null);
         try {
             await apiRequest(`/chat/messages?chat_id=${chatId}`, {
                 method: 'DELETE',
