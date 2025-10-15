@@ -43,6 +43,7 @@ export async function apiRequest<TResponse = unknown, TBody = unknown>(
   if (session?.access_token) {
     finalHeaders.Authorization = `Bearer ${session.access_token}`;
   }
+  console.log("Authorization header: ", finalHeaders.Authorization);
   const normalizedEndpoint = normalizeEndpoint(endpoint);
   console.debug("Calling endpoint:", normalizedEndpoint, "method:", method);
   // console.log("Final headers:", finalHeaders);

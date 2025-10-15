@@ -109,7 +109,7 @@ export default function ChatScreen() {
     // Add a draft assistant message to stream into
     setMessages(prev => [
       ...prev,
-      { id: draftAssistantId, role: "assistant", content: "" },
+      { id: draftAssistantId, role: "assistant", content: "", status: "loading" },
     ]);
 
     // Scroll to bottom after adding draft assistant message
@@ -135,7 +135,7 @@ export default function ChatScreen() {
                 setActiveTool(null);
                 // Append token to the latest assistant draft
                 return prev.map(m =>
-                  m.id === draftAssistantId ? { ...m, content: m.content + token } : m
+                  m.id === draftAssistantId ? { ...m, content: m.content + token, status: "loading" } : m
                 );
               });
             } else if (event.type === "final") {
@@ -144,7 +144,7 @@ export default function ChatScreen() {
               const finalText = extractText(event.message);
               setMessages(prev => prev.map(m =>
                 m.id === draftAssistantId && finalText
-                  ? { ...m, content: finalText }
+                  ? { ...m, content: finalText, status: "sent" }
                   : m
               ));
               // Update chat id
@@ -163,16 +163,23 @@ export default function ChatScreen() {
               setActiveTool(tool);
             } else if (event.type === "tool_end") {
               setActiveTool((old) => old?.name === event.tool ? null : old);
+            } else if (event.type === "error") {
+              console.error(event.message);
+              setMessages(prev => prev.map(m =>
+                m.id === draftAssistantId
+                  ? { ...m, content: `Error: ${event.message}`, status: "error", error: event.message }
+                  : m
+              ));
             }
           },
         }
       );
     } catch (err) {
       // Show error as assistant message
-      console.error(err)
+      console.error("Error in handleSendMessage: ", err)
       const message = err instanceof Error ? err.message : 'Something went wrong';
       setMessages(prev => prev.map(m =>
-        m.id === draftAssistantId ? { ...m, content: `Error: ${message}` } : m
+        m.id === draftAssistantId ? { ...m, content: `Error: ${message}`, status: "error", error: message } : m
       ));
     }
   };
@@ -225,8 +232,9 @@ export default function ChatScreen() {
 
 const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Tool | null }) => {
   const isUser = message.role === "user";
-  const isLoading = !isUser && !message.content;
-  const isNetworkIcon = activeTool?.icon.startsWith("http");
+  const isLoading = !isUser && message.status === "loading";
+  const isError = !isUser && message.status === "error";
+  const isNetworkIcon = activeTool?.icon?.startsWith("http") === true;
   return (
     <View
       className={`flex-row items-end mb-4 mx-2 ${isUser ? 'justify-end' : 'justify-start'
@@ -254,8 +262,7 @@ const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Too
           </View>
         ) : (
           <ThemedText
-            className={`text-sm p-2 ${isUser ? 'text-white' : 'text-typography-900'
-              }`}
+            className={`text-sm p-2 ${isUser ? 'text-white' : (isError ? 'text-red-400' : 'text-typography-900')}`}
           >
             {message.content}
           </ThemedText>
