@@ -2,7 +2,7 @@ import { apiRequest } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { Chat } from '@/lib/types';
 import { router } from 'expo-router';
-import { LogOut, MessageSquare, Plus, Trash2, X } from 'lucide-react-native';
+import { LogOut, Plus, Trash2, X } from 'lucide-react-native';
 import React from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,20 +20,47 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const [error, setError] = React.useState<string | null>(null);
     const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null);
     const [isDeletingChat, setIsDeletingChat] = React.useState<string | null>(null);
+    const [currentPage, setCurrentPage] = React.useState(1);
+    const [hasMoreChats, setHasMoreChats] = React.useState(true);
+    const [isLoadingMore, setIsLoadingMore] = React.useState(false);
 
-    const getUserChats = async () => {
-        setIsLoadingChats(true);
+    const getUserChats = async (page: number = 1, append: boolean = false) => {
+        if (append) {
+            setIsLoadingMore(true);
+        } else {
+            setIsLoadingChats(true);
+        }
+
         try {
-            const data = await apiRequest('/chat', {
+            const data = await apiRequest(`/chat?page=${page}&limit=25`, {
                 method: 'GET',
             });
-            const { chats } = data as { chats: Chat[] };
-            setChats(chats as Chat[])
+            const { chats: newChats, pagination } = data as {
+                chats: Chat[];
+                pagination: {
+                    page: number;
+                    limit: number;
+                    total: number;
+                    hasMore: boolean;
+                    totalPages: number;
+                }
+            };
+            console.log(pagination);
+
+            if (append) {
+                setChats(prev => [...prev, ...newChats]);
+            } else {
+                setChats(newChats as Chat[]);
+            }
+
+            // Use the hasMore flag from the API
+            setHasMoreChats(pagination.hasMore);
         } catch (error) {
             setError(error instanceof Error ? error.message : 'An unknown error occurred')
             console.error(error)
         } finally {
             setIsLoadingChats(false);
+            setIsLoadingMore(false);
         }
     }
 
@@ -54,9 +81,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         }
     }
 
+    const loadMoreChats = () => {
+        console.log('loadMoreChats called', { isLoadingMore, hasMoreChats, isLoadingChats, currentPage });
+        if (!isLoadingMore && hasMoreChats && !isLoadingChats) {
+            const nextPage = currentPage + 1;
+            console.log('Loading page:', nextPage);
+            setCurrentPage(nextPage);
+            getUserChats(nextPage, true);
+        }
+    }
+
     React.useEffect(() => {
         if (isOpen) {
-            getUserChats();
+            // Reset pagination and load first page
+            setCurrentPage(1);
+            setHasMoreChats(true);
+            getUserChats(1, false);
         } else {
             // Close dropdown when sidebar closes
             setActiveDropdown(null);
@@ -125,7 +165,29 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <ActivityIndicator color="#FFFFFF" size="large" />
                     </View>
                 ) : (
-                    <ScrollView className="flex-1" contentContainerStyle={{ paddingVertical: 8 }}>
+                    <ScrollView
+                        className="flex-1"
+                        contentContainerStyle={{ paddingVertical: 8 }}
+                        onScroll={(event) => {
+                            const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+                            const paddingToBottom = 100;
+                            const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+
+                            if (isCloseToBottom) {
+                                loadMoreChats();
+                            }
+                        }}
+                        scrollEventThrottle={200}
+                        onMomentumScrollEnd={(event) => {
+                            const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+                            const paddingToBottom = 50;
+                            const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+
+                            if (isCloseToBottom) {
+                                loadMoreChats();
+                            }
+                        }}
+                    >
                         {error && <Text className="text-[#FF0000] text-sm font-semibold px-4">{error}</Text>}
                         {chats?.map((chat) => (
                             <View key={`chat-${chat.id}`} className="relative">
@@ -148,10 +210,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                                     }}
                                     delayLongPress={500}
                                 >
-                                    <View className="w-7 h-7 rounded-full bg-[#333333] items-center justify-center">
+                                    {/* <View className="w-10 h-10 rounded-full bg-[#333333] items-center justify-center">
                                         <MessageSquare color="#FFFFFF" size={18} />
-                                    </View>
-                                    <Text className="text-[#E5E5E5] text-sm font-semibold flex-1" numberOfLines={1}>
+                                    </View> */}
+                                    <Text className="text-[#E5E5E5] text-lg flex-1" numberOfLines={1}>
                                         {chat.title || chat.id.slice(0, 8)}
                                     </Text>
                                 </TouchableOpacity>
@@ -178,6 +240,20 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 )}
                             </View>
                         ))}
+
+                        {/* Loading More Indicator */}
+                        {isLoadingMore && (
+                            <View className="py-4 items-center">
+                                <ActivityIndicator size="small" color="#FFFFFF" />
+                            </View>
+                        )}
+
+                        {/* End of List Indicator */}
+                        {!hasMoreChats && chats.length > 0 && (
+                            <View className="py-4 items-center">
+                                <Text className="text-[#666666] text-xs">No more chats</Text>
+                            </View>
+                        )}
                     </ScrollView>
                 )}
 
