@@ -44,7 +44,6 @@ export default function ChatScreen() {
         setIsLoadingMessages(true);
         try {
           const data = await getChatMessages(params.chat_id);
-          console.log("Messages:", data.messages);
           setMessages(data.messages);
           setChatId(params.chat_id);
         } catch (error) {
@@ -181,7 +180,7 @@ const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Too
       <View
         className={`max-w-[80%] p-3 rounded-lg ${isUser
           ? 'bg-secondary-200 rounded-br-sm'
-          : 'bg-secondary-100 rounded-bl-sm'
+          : 'bg-secondary-50 rounded-bl-sm'
           }`}
       >
         {isLoading ? (

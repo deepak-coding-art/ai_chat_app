@@ -9,9 +9,9 @@ export default function SideLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <SafeAreaView className='flex-1 bg-secondary-50' edges={['top', 'bottom', 'left', 'right']}>
+    <SafeAreaView className='flex-1' edges={['top', 'bottom', 'left', 'right']}>
       {/* Main content - full screen */}
-      <View className='flex-1 bg-secondary-50'>
+      <View className='flex-1'>
         <Slot />
       </View>
 
