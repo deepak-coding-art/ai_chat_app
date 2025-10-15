@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
-import { ActivityIndicator, Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, Modal, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 WebBrowser.maybeCompleteAuthSession(); // required for web only
 const redirectTo = makeRedirectUri();
@@ -39,6 +39,25 @@ export default function Auth() {
     const validateEmail = (email: string) => {
         return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
     }
+
+    const performGoogleOAuth = async () => {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo,
+                skipBrowserRedirect: true,
+            },
+        });
+        if (error) throw error;
+        const res = await WebBrowser.openAuthSessionAsync(
+            data?.url ?? "",
+            redirectTo
+        );
+        if (res.type === "success") {
+            const { url } = res;
+            await createSessionFromUrl(url);
+        }
+    };
 
     const sendMagicLink = async () => {
         if (!email) {
@@ -91,30 +110,38 @@ export default function Auth() {
                 editable={!loading}
             />
             {error && <Text className="text-red-500 text-sm self-start mx-4 mt-1">{error}</Text>}
-            <View className="w-full">
-                <TouchableOpacity
-                    onPress={sendMagicLink}
-                    disabled={loading}
-                    activeOpacity={0.8}
-                    className="w-full overflow-hidden rounded-full mt-6"
+            <TouchableOpacity
+                onPress={sendMagicLink}
+                disabled={loading}
+                activeOpacity={0.8}
+                className="w-full overflow-hidden rounded-full mt-6"
+            >
+                <LinearGradient
+                    colors={['#ec4899', '#a855f7']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="py-3 px-6 flex-row justify-center items-center rounded-full"
                 >
-                    <LinearGradient
-                        colors={['#ec4899', '#a855f7']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        className="py-2 px-6 flex-row justify-center items-center rounded-full"
-                    >
-                        {loading ? (
-                            <>
-                                <ActivityIndicator color="white" />
-                                <Text className="text-white text-lg ml-2">Sending...</Text>
-                            </>
-                        ) : (
-                            <Text className="text-white text-lg">Login with Email</Text>
-                        )}
-                    </LinearGradient>
-                </TouchableOpacity>
-            </View>
+                    {loading ? (
+                        <>
+                            <ActivityIndicator color="white" />
+                            <Text className="text-white text-lg ml-2">Sending...</Text>
+                        </>
+                    ) : (
+                        <Text className="text-white text-lg font-semibold">Login with Email</Text>
+                    )}
+                </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity
+                onPress={performGoogleOAuth}
+                className="w-full bg-white rounded-full mt-12 py-3 px-6 flex-row justify-center items-center"
+            >
+                <Image
+                    source={require('@/assets/images/google-icon.png')}
+                    className="w-6 h-6 mr-3"
+                />
+                <Text className="text-gray-800 text-lg font-semibold">Login with Google</Text>
+            </TouchableOpacity>
 
             {/* Success Modal */}
             <Modal
