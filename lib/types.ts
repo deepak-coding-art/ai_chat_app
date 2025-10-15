@@ -12,10 +12,14 @@ export interface ChatTask {
   prompt: string;
 }
 
+export type MessageStatus = "loading" | "sent" | "error";
+
 export interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  status?: MessageStatus;
+  error?: string;
 }
 
 export type ChatId = string;
