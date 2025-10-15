@@ -29,6 +29,7 @@ const createSessionFromUrl = async (url: string) => {
 export default function Auth() {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
+    const [googleLoading, setGoogleLoading] = useState(false);
     const [error, setError] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -41,6 +42,7 @@ export default function Auth() {
     }
 
     const performGoogleOAuth = async () => {
+        setGoogleLoading(true);
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
@@ -57,6 +59,7 @@ export default function Auth() {
             const { url } = res;
             await createSessionFromUrl(url);
         }
+        setGoogleLoading(false);
     };
 
     const sendMagicLink = async () => {
@@ -134,13 +137,27 @@ export default function Auth() {
             </TouchableOpacity>
             <TouchableOpacity
                 onPress={performGoogleOAuth}
+                disabled={googleLoading}
                 className="w-full bg-white rounded-full mt-12 py-3 px-6 flex-row justify-center items-center"
             >
-                <Image
-                    source={require('@/assets/images/google-icon.png')}
-                    className="w-6 h-6 mr-3"
-                />
-                <Text className="text-gray-800 text-lg font-semibold">Login with Google</Text>
+
+                {googleLoading ? (
+                    <>
+                        <ActivityIndicator color="black" className="mr-3" />
+                        <Text className="text-gray-800 text-lg font-semibold">Loading...</Text>
+                    </>
+                ) : (
+                    <>
+                        <Image
+                            source={require('@/assets/images/google-icon.png')}
+                            className="w-6 h-6 mr-3"
+                        />
+
+                        <Text className="text-gray-800 text-lg font-semibold">Login with Google</Text>
+                    </>
+                )}
+
+
             </TouchableOpacity>
 
             {/* Success Modal */}
