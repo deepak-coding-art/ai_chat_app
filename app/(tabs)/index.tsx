@@ -18,6 +18,7 @@ import {
   TouchableWithoutFeedback,
   View
 } from 'react-native';
+import Markdown from 'react-native-markdown-display';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -242,7 +243,7 @@ const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Too
     >
 
       <View
-        className={`max-w-[80%] p-3 rounded-[24px] ${isUser
+        className={`max-w-[80%] px-3.5 py-1.5 rounded-[24px] ${isUser
           ? 'bg-secondary-200' // rounded-br-sm
           : 'bg-secondary-50' //rounded-bl-sm'
           }`}
@@ -261,11 +262,7 @@ const MessageBox = ({ message, activeTool }: { message: Message; activeTool: Too
             )}
           </View>
         ) : (
-          <ThemedText
-            className={`text-sm p-2 ${isUser ? 'text-white' : (isError ? 'text-red-400' : 'text-typography-900')}`}
-          >
-            {message.content}
-          </ThemedText>
+          <MarkdownMessage message={message} isUser={isUser} isError={isError} />
         )}
 
       </View>
@@ -420,5 +417,78 @@ const ChatInput = ({ inputText, setInputText, handleSendMessage }: { inputText: 
         </TouchableOpacity>
       </View>
     </View>
+  )
+}
+
+
+const MarkdownMessage = ({ message, isUser, isError }: { message: Message, isUser: boolean, isError: boolean }) => {
+  return (
+    <Markdown
+      style={{
+        body: {
+          fontSize: 16,
+          color: isUser ? '#ffffff' : (isError ? '#f87171' : '#ffffff'),
+        },
+        heading1: {
+          fontSize: 20,
+          fontWeight: 'bold',
+          color: isUser ? '#ffffff' : (isError ? '#f87171' : '#ffffff'),
+          marginBottom: 8,
+        },
+        heading2: {
+          fontSize: 18,
+          fontWeight: 'bold',
+          color: isUser ? '#ffffff' : (isError ? '#f87171' : '#ffffff'),
+          marginBottom: 6,
+        },
+        heading3: {
+          fontSize: 16,
+          fontWeight: 'bold',
+          color: isUser ? '#ffffff' : (isError ? '#f87171' : '#ffffff'),
+          marginBottom: 4,
+        },
+        code_inline: {
+          backgroundColor: isUser ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          color: isUser ? '#ffffff' : (isError ? '#f87171' : '#ffffff'),
+          padding: 2,
+          borderRadius: 4,
+          fontSize: 13,
+        },
+        code_block: {
+          backgroundColor: isUser ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          color: isUser ? '#ffffff' : (isError ? '#f87171' : '#ffffff'),
+          padding: 8,
+          borderRadius: 8,
+          fontSize: 13,
+          marginVertical: 4,
+        },
+        link: {
+          color: isUser ? '#60a5fa' : '#3b82f6',
+          textDecorationLine: 'underline',
+        },
+        strong: {
+          fontWeight: 'bold',
+          color: isUser ? '#ffffff' : (isError ? '#f87171' : '#ffffff'),
+        },
+        em: {
+          fontStyle: 'italic',
+          color: isUser ? '#ffffff' : (isError ? '#f87171' : '#ffffff'),
+        },
+        blockquote: {
+          backgroundColor: isUser ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          borderLeftWidth: 4,
+          borderLeftColor: isUser ? '#60a5fa' : '#3b82f6',
+          paddingLeft: 8,
+          marginVertical: 4,
+          color: isUser ? '#ffffff' : (isError ? '#f87171' : '#ffffff'),
+        },
+        list_item: {
+          color: isUser ? '#ffffff' : (isError ? '#f87171' : '#ffffff'),
+          marginVertical: 2,
+        },
+      }}
+    >
+      {message.content}
+    </Markdown>
   )
 }
