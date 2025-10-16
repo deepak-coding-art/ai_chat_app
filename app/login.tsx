@@ -12,10 +12,10 @@ WebBrowser.maybeCompleteAuthSession(); // required for web only
 const redirectTo = makeRedirectUri();
 const createSessionFromUrl = async (url: string) => {
     const { params, errorCode } = QueryParams.getQueryParams(url);
-
+    console.log({ params, errorCode });
     if (errorCode) throw new Error(errorCode);
     const { access_token, refresh_token } = params;
-
+    console.log({ access_token, refresh_token });
     if (!access_token) return;
 
     const { data, error } = await supabase.auth.setSession({
